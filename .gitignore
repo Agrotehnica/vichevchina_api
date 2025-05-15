@@ -1,0 +1,5 @@
+aapi/
+__pycache__/
+generate_requirements.py
+*.old
+*.in
