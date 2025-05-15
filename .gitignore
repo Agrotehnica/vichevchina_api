@@ -1,5 +1,6 @@
 aapi/
 __pycache__/
+mysql_data/
 generate_requirements.py
 *.old
 *.in
