@@ -1,10 +1,36 @@
 from fastapi import HTTPException, status
 from typing import Dict, Any
-from database import get_db, Ingredient, FeedMixer
-import uuid
 from db_mysql import get_connection
+import uuid
 
-db = get_db()
+# Получить ингредиент и все его бункеры
+def get_ingredient_bins_from_db(guid):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM ingredients WHERE guid=%s", (guid,))
+            ingredient = cursor.fetchone()
+            if not ingredient:
+                return None
+
+            cursor.execute("SELECT * FROM bins WHERE guid=%s", (guid,))
+            bins = cursor.fetchall()
+            return {
+                "ingredient": ingredient,
+                "bins": bins
+            }
+    finally:
+        conn.close()
+
+# Проверить наличие миксера
+def mixer_exists(feed_mixer_id):
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM mixers WHERE mixer_id=%s", (feed_mixer_id,))
+            return cursor.fetchone() is not None
+    finally:
+        conn.close()
 
 # POST /ingredient/
 def handle_ingredient_request(data: Dict[str, Any]):
@@ -14,33 +40,31 @@ def handle_ingredient_request(data: Dict[str, Any]):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
         )
-    
+
     guid = data["guid"]
     amount = int(data["amount"])
-    
-    if guid not in db["ingredients"]:
+
+    result = get_ingredient_bins_from_db(guid)
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
         )
-    
-    ingredient = db["ingredients"][guid]
-    
-    for bin_id, bin_amount in ingredient.bins.items():
+
+    for bin in result["bins"]:
+        bin_amount = bin["amount"]
         if bin_amount >= amount:
             return {
                 "status": "success",
                 "additional_loading": False,
-                "bin": "101",  # Условный номер
-                "bin_id": bin_id,
+                "bin_id": bin["bin_id"],
                 "amount": bin_amount
             }
         elif bin_amount > 0:
             return {
                 "status": "insufficient",
                 "additional_loading": True,
-                "bin": "101",
-                "bin_id": bin_id,
+                "bin_id": bin["bin_id"],
                 "amount": bin_amount
             }
 
@@ -54,65 +78,80 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
         )
-    
+
     guid = data["guid"]
     feed_mixer_id = data["feed_mixer_id"]
     bin_id = data["bin_id"]
     amount = int(data["amount"])
-    
-    if guid not in db["ingredients"]:
+
+    # Проверка ингредиента и бункера
+    result = get_ingredient_bins_from_db(guid)
+    if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
         )
-    
-    if feed_mixer_id not in db["feed_mixers"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Feed mixer not found"
-        )
-    
-    ingredient = db["ingredients"][guid]
-    
-    if bin_id not in ingredient.bins:
+    bin_found = next((bin for bin in result["bins"] if bin["bin_id"] == bin_id), None)
+    if not bin_found:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found"
         )
-    
-    bin_amount = ingredient.bins[bin_id]
+
+    # Проверка миксера
+    if not mixer_exists(feed_mixer_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Feed mixer not found"
+        )
+
+    bin_amount = bin_found["amount"]
     additional_loading = bin_amount < amount
 
-    # Генерация и сохранение request_id
     request_id = str(uuid.uuid4())
-    db["requests"][request_id] = {
-        "request_id": request_id,
-        "feed_mixer_id": feed_mixer_id,
-        "current_bin_id": bin_id,
-        "current_ingredient_guid": guid
-    }
+    delivered_amount = min(bin_amount, amount)
+    loading_into_mixer = 1  # True
 
-    # Обновляем состояние миксера
-    mixer = db["feed_mixers"][feed_mixer_id]
-    mixer.current_bin_id = bin_id
-    mixer.current_ingredient_guid = guid
-    mixer.current_request_id = request_id
+    # Сохраняем новый запрос в таблицу requests
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO requests (
+                    request_id,
+                    mixer_id,
+                    bin_id,
+                    guid,
+                    requested_amount,
+                    delivered_amount,
+                    loading_into_mixer
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                request_id,
+                feed_mixer_id,
+                bin_id,
+                guid,
+                amount,
+                delivered_amount,
+                loading_into_mixer
+            ))
+    finally:
+        conn.close()
 
     return {
         "additional_loading": additional_loading,
         "request_id": request_id,
         "start_loading": True,
-        "amount": min(bin_amount, amount)
+        "amount": delivered_amount
     }
 
-# соединение с БД
+# функция для получения всех ингредиентов (не обязательно)
 def get_all_ingredients():
-    """Получение всех ингредиентов из базы данных."""
-    conn = get_connection()  # Открываем соединение с базой
+    conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM ingredients")
             data = cursor.fetchall()
             return data
     finally:
-        conn.close()  # Закрываем соединение после использования
+        conn.close()

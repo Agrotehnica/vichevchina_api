@@ -1,5 +1,5 @@
---ингридиенты
-INSERT INTO ingredients (ingredient_id, name) VALUES
+-- ингридиенты
+INSERT INTO ingredients (guid, name) VALUES
 ('A3G7H1P9QZ', 'Dog Chow'),
 ('X9V2K4B7MN', 'Whiskas'),
 ('L8J6S0U1DQ', 'Purina One'),
@@ -11,8 +11,8 @@ INSERT INTO ingredients (ingredient_id, name) VALUES
 ('M2N4B6V8CX', 'Acana'),
 ('S1D3F5G7HJ', 'Pro Plan');
 
---бункеры 
-INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
+-- бункеры 
+INSERT INTO bins (bin_id, guid, amount) VALUES
 ('01', 'A3G7H1P9QZ', 523),
 ('02', 'X9V2K4B7MN', 1000),
 ('03', 'L8J6S0U1DQ', 357),
@@ -27,7 +27,7 @@ INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
 ('12', 'C3V5B6N7MQ', 67),
 ('13', 'A3G7H1P9QZ', 633);
 
---миксеры
+-- миксеры
 INSERT INTO mixers (mixer_id) VALUES
 ('00000000000001'),
 ('00000000000002'),
