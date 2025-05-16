@@ -24,11 +24,11 @@ app.add_middleware(
 
 # Модели запросов
 class IngredientRequest(BaseModel):
-    guid: str
+    ingredient_id: str
     amount: int
 
 class ConfirmStartLoadingRequest(BaseModel):
-    guid: str
+    ingredient_id: str
     feed_mixer_id: str
     bin_id: str
     amount: int

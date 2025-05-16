@@ -4,16 +4,16 @@ from db_mysql import get_connection
 import uuid
 
 # Получить ингредиент и все его бункеры
-def get_ingredient_bins_from_db(guid):
+def get_ingredient_bins_from_db(ingredient_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM ingredients WHERE guid=%s", (guid,))
+            cursor.execute("SELECT * FROM ingredients WHERE ingredient_id=%s", (ingredient_id,))
             ingredient = cursor.fetchone()
             if not ingredient:
                 return None
 
-            cursor.execute("SELECT * FROM bins WHERE guid=%s", (guid,))
+            cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s", (ingredient_id,))
             bins = cursor.fetchall()
             return {
                 "ingredient": ingredient,
@@ -34,17 +34,17 @@ def mixer_exists(feed_mixer_id):
 
 # POST /ingredient/
 def handle_ingredient_request(data: Dict[str, Any]):
-    required_fields = ["guid", "amount"]
+    required_fields = ["ingredient_id", "amount"]
     if not all(field in data for field in required_fields):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
         )
 
-    guid = data["guid"]
+    ingredient_id = data["ingredient_id"]
     amount = int(data["amount"])
 
-    result = get_ingredient_bins_from_db(guid)
+    result = get_ingredient_bins_from_db(ingredient_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -72,20 +72,20 @@ def handle_ingredient_request(data: Dict[str, Any]):
 
 # POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):
-    required_fields = ["guid", "feed_mixer_id", "bin_id", "amount"]
+    required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
         )
 
-    guid = data["guid"]
+    ingredient_id = data["ingredient_id"]
     feed_mixer_id = data["feed_mixer_id"]
     bin_id = data["bin_id"]
     amount = int(data["amount"])
 
     # Проверка ингредиента и бункера
-    result = get_ingredient_bins_from_db(guid)
+    result = get_ingredient_bins_from_db(ingredient_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -121,7 +121,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                     request_id,
                     mixer_id,
                     bin_id,
-                    guid,
+                    ingredient_id,
                     requested_amount,
                     delivered_amount,
                     loading_into_mixer
@@ -130,7 +130,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                 request_id,
                 feed_mixer_id,
                 bin_id,
-                guid,
+                ingredient_id,
                 amount,
                 delivered_amount,
                 loading_into_mixer
