@@ -139,10 +139,10 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         conn.close()
 
     return {
-        "additional_loading": additional_loading,
         "request_id": request_id,
-        "start_loading": True,
-        "amount": delivered_amount
+        "additional_loading": additional_loading,
+        "amount": delivered_amount,
+        "start_loading": True
     }
 
 # функция для получения всех ингредиентов (не обязательно)
