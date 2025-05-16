@@ -58,10 +58,19 @@ http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJ
 
 ####################################
 docker mySQL + phpMyAdfmin
-
-БД:           db_api
 phpMuAdmin    http://localhost:8081
-
 запуск:
 docker start mysql-test
 или из графической облочки Docker Engine
+
+
+БД:     db_api
+Server: mysql (или пусто)
+    Пользовательские права:
+            Username: myuser
+            Password: mypassword
+            Server: mysql (или пусто)
+    Суперправа (root):
+            Username: root
+            Password: agrotechika (задается  в docker-compose.yml)
+

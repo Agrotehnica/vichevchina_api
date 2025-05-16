@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from typing import Dict, Any
 from database import get_db, Ingredient, FeedMixer
 import uuid
+from db_mysql import get_connection
 
 db = get_db()
 
@@ -103,3 +104,15 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         "start_loading": True,
         "amount": min(bin_amount, amount)
     }
+
+# соединение с БД
+def get_all_ingredients():
+    """Получение всех ингредиентов из базы данных."""
+    conn = get_connection()  # Открываем соединение с базой
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM ingredients")
+            data = cursor.fetchall()
+            return data
+    finally:
+        conn.close()  # Закрываем соединение после использования

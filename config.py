@@ -9,9 +9,9 @@ class Settings(BaseSettings):
 
     # --- Добавлено для MySQL ---
     MYSQL_HOST: str = "localhost"
-    MYSQL_USER: str = "root"
-    MYSQL_PASSWORD: str = ""
-    MYSQL_DB: str = "test_db"
+    MYSQL_USER: str = "myuser"
+    MYSQL_PASSWORD: str = "mypassword"
+    MYSQL_DB: str = "db_api"
 
     class Config:
         case_sensitive = True

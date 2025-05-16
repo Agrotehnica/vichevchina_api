@@ -2,6 +2,7 @@ import pymysql
 from config import settings
 
 def get_connection():
+    """Получение соединения с базой данных."""
     connection = pymysql.connect(
         host=settings.MYSQL_HOST,
         user=settings.MYSQL_USER,
@@ -12,3 +13,7 @@ def get_connection():
         autocommit=True
     )
     return connection
+
+
+
+
