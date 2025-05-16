@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
-from auth import create_access_token, get_current_user_from_token
+from auth import create_access_token, get_current_user_from_token, authenticate_user
 from handlers import handle_ingredient_request, handle_confirm_start_loading
 from config import settings
 
@@ -33,10 +33,10 @@ class ConfirmStartLoadingRequest(BaseModel):
     bin_id: str
     amount: int
 
-# Эндпоинт авторизации
+# Эндпоинт авторизации через БД users
 @app.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    if form_data.username == "admin" and form_data.password == "password":
+    if authenticate_user(form_data.username, form_data.password):
         access_token = create_access_token(data={"sub": form_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     raise HTTPException(status_code=400, detail="Incorrect username or password")
