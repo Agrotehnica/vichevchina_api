@@ -2,9 +2,10 @@
 CREATE TABLE ingredients (
     ingredient_id VARCHAR(255) PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL
+    UNIQUE (name)
 );
 
--- Таблица для корзин (бункеров)
+-- Таблица для бункеров
 CREATE TABLE bins (
     bin_id VARCHAR(255) PRIMARY KEY NOT NULL,
     ingredient_id VARCHAR(255) NOT NULL,
@@ -28,4 +29,11 @@ CREATE TABLE requests (
     FOREIGN KEY (bin_id) REFERENCES bins(bin_id),
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
 );
+
+-- Таблица пользователь/пароль
+CREATE TABLE users (
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    PRIMARY KEY (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

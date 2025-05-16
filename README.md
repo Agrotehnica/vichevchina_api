@@ -55,3 +55,13 @@ http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJ
 {
     "detail": "Could not validate credentials"
 }
+
+####################################
+docker mySQL + phpMyAdfmin
+
+БД:           db_api
+phpMuAdmin    http://localhost:8081
+
+запуск:
+docker start mysql-test
+или из графической облочки Docker Engine
