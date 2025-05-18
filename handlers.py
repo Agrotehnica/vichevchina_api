@@ -145,7 +145,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         "start_loading": True
     }
 
-# функция для получения всех ингредиентов (не обязательно)
+# функция для получения всех ингредиентов (не используется)
 def get_all_ingredients():
     conn = get_connection()
     try:
