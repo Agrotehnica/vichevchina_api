@@ -12,9 +12,9 @@ INSERT INTO ingredients (ingredient_id, name) VALUES
 ('S1D3F5G7HJ', 'Pro Plan');
 
 -- бункеры 
-INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
-('01', 'A3G7H1P9QZ', 200),
-('02', 'X9V2K4B7MN', 1000),
+INSERT INTO bins (bin_id, ingredient_id, amount, mixer_id) VALUES
+('01', 'A3G7H1P9QZ', 200,'M003'),
+('02', 'X9V2K4B7MN', 1000, 'M002'),
 ('03', 'L8J6S0U1DQ', 357),
 ('04', 'P4Q3W2E1ZR', 829),
 ('05', 'T5Y7U8I9OP', 12),
@@ -29,11 +29,11 @@ INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
 
 -- миксеры
 INSERT INTO mixers (mixer_id) VALUES
-('00000000000001'),
-('00000000000002'),
-('00000000000003'),
-('00000000000004'),
-('00000000000005');
+('M001'),
+('M002'),
+('M003'),
+('M004'),
+('M005');
 
 -- пользователи
 INSERT INTO users (username, password) VALUES

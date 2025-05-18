@@ -138,7 +138,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     request_id = str(uuid.uuid4())
     delivered_amount = min(bin_amount, amount)
-    loading_into_mixer = 1  # True
+    loading_into_mixer_run = 1  # True
 
     # Сохраняем новый запрос в таблицу requests
     conn = get_connection()
@@ -151,17 +151,15 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                     bin_id,
                     ingredient_id,
                     requested_amount,
-                    delivered_amount,
-                    loading_into_mixer
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    loading_into_mixer_run
+                ) VALUES ( %s, %s, %s, %s, %s, %s)
             """, (
                 request_id,
                 feed_mixer_id,
                 bin_id,
                 ingredient_id,
                 amount,
-                delivered_amount,
-                loading_into_mixer
+                loading_into_mixer_run
             ))
     finally:
         conn.close()
