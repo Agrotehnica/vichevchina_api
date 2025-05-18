@@ -4,4 +4,4 @@ mysql_data/
 generate_requirements.py
 *.old
 *.in
-
+*.tmp

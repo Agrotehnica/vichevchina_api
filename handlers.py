@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status
 from typing import Dict, Any
 from db_mysql import get_connection
-import uuid
 
 # Получить ингредиент и все его бункеры
 def get_ingredient_bins_from_db(ingredient_id):
@@ -65,12 +64,10 @@ def handle_ingredient_request(data: Dict[str, Any]):
 
     # 2. Считаем суммарное количество во всех бункерах
     total_amount = sum(bin["amount"] for bin in bins)
-    # Смотрим, есть ли вообще хоть сколько-то в бункерах
     non_zero_bins = [bin for bin in bins if bin["amount"] > 0]
 
     # 3. Если в нескольких бункерах есть суммарно достаточно
     if len(non_zero_bins) > 1 and total_amount >= amount:
-        # Возвращаем данные по самому "богатому" бункеру (или первому с остатком)
         richest_bin = max(non_zero_bins, key=lambda b: b["amount"])
         return {
             "status": "insufficient",
@@ -136,7 +133,6 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     bin_amount = bin_found["amount"]
     additional_loading = bin_amount < amount
 
-    request_id = str(uuid.uuid4())
     delivered_amount = min(bin_amount, amount)
     loading_into_mixer_run = 1  # True
 
@@ -148,27 +144,26 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     else:
         status_val = "missing"
 
-    # Сохраняем новый запрос в таблицу requests
+    # Сохраняем новый запрос в таблицу requests (ID теперь автоинкремент)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
                 INSERT INTO requests (
-                    request_id,
                     mixer_id,
                     bin_id,
                     ingredient_id,
                     requested_amount,
                     loading_into_mixer_run
-                ) VALUES ( %s, %s, %s, %s, %s, %s)
+                ) VALUES ( %s, %s, %s, %s, %s)
             """, (
-                request_id,
                 feed_mixer_id,
                 bin_id,
                 ingredient_id,
                 amount,
                 loading_into_mixer_run
             ))
+            request_id = cursor.lastrowid  # Вот он, новый номер!
     finally:
         conn.close()
 

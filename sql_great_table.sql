@@ -19,9 +19,9 @@ CREATE TABLE bins (
     FOREIGN KEY (mixer_id) REFERENCES mixers(mixer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4. Таблица запросов
+-- 4. Таблица запросов (request_id — автоинкремент!)
 CREATE TABLE requests (
-    request_id VARCHAR(255) PRIMARY KEY NOT NULL,
+    request_id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     mixer_id VARCHAR(255),
     bin_id VARCHAR(255) NOT NULL,
     ingredient_id VARCHAR(255) NOT NULL,
