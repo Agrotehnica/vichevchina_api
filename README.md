@@ -13,7 +13,7 @@ pip install -r requirements.txt
 Запустить сервер:
 python app.py
 
-Сервер доступен по адресу 127.0.0.1:8000
+Сервер uvucorn доступен по адресу 127.0.0.1:8000
 
 # запрос токена POST /login/
 http -f POST http://127.0.0.1:8000/login username=admin password=password

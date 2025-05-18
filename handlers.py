@@ -45,30 +45,58 @@ def handle_ingredient_request(data: Dict[str, Any]):
     amount = int(data["amount"])
 
     result = get_ingredient_bins_from_db(ingredient_id)
-    if not result:
+    if not result or not result["bins"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
         )
 
-    for bin in result["bins"]:
-        bin_amount = bin["amount"]
-        if bin_amount >= amount:
+    bins = result["bins"]
+
+    # 1. Проверяем, хватает ли в ОДНОМ бункере
+    for bin in bins:
+        if bin["amount"] >= amount:
             return {
                 "status": "success",
                 "additional_loading": False,
-                "bin_id": bin["bin_id"],
-                "amount": bin_amount
-            }
-        elif bin_amount > 0:
-            return {
-                "status": "insufficient",
-                "additional_loading": True,
-                "bin_id": bin["bin_id"],
-                "amount": bin_amount
+                "amount": bin["amount"],
+                "bin_id": bin["bin_id"]
             }
 
-    return {"status": "missing"}
+    # 2. Считаем суммарное количество во всех бункерах
+    total_amount = sum(bin["amount"] for bin in bins)
+    # Смотрим, есть ли вообще хоть сколько-то в бункерах
+    non_zero_bins = [bin for bin in bins if bin["amount"] > 0]
+
+    # 3. Если в нескольких бункерах есть суммарно достаточно
+    if len(non_zero_bins) > 1 and total_amount >= amount:
+        # Возвращаем данные по самому "богатому" бункеру (или первому с остатком)
+        richest_bin = max(non_zero_bins, key=lambda b: b["amount"])
+        return {
+            "status": "insufficient",
+            "additional_loading": True,
+            "amount": richest_bin["amount"],
+            "bin_id": richest_bin["bin_id"]
+        }
+
+    # 4. Если в одном бункере мало и в других нет вообще, или всего не хватает
+    if non_zero_bins:
+        bin = non_zero_bins[0]
+        return {
+            "status": "insufficient",
+            "additional_loading": False,
+            "amount": bin["amount"],
+            "bin_id": bin["bin_id"]
+        }
+
+    # 5. Вообще нигде нет такого ингредиента
+    return {
+        "status": "missing",
+        "additional_loading": False,
+        "amount": 0,
+        "bin_id": None
+    }
+
 
 # POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):

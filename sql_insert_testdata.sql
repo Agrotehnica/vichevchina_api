@@ -13,7 +13,7 @@ INSERT INTO ingredients (ingredient_id, name) VALUES
 
 -- бункеры 
 INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
-('01', 'A3G7H1P9QZ', 523),
+('01', 'A3G7H1P9QZ', 200),
 ('02', 'X9V2K4B7MN', 1000),
 ('03', 'L8J6S0U1DQ', 357),
 ('04', 'P4Q3W2E1ZR', 829),
@@ -25,7 +25,7 @@ INSERT INTO bins (bin_id, ingredient_id, amount) VALUES
 ('10', 'S1D3F5G7HJ', 110),
 ('11', 'L8J6S0U1DQ', 780),
 ('12', 'C3V5B6N7MQ', 67),
-('13', 'A3G7H1P9QZ', 633);
+('13', 'A3G7H1P9QZ', 300);
 
 -- миксеры
 INSERT INTO mixers (mixer_id) VALUES
