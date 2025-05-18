@@ -140,6 +140,14 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     delivered_amount = min(bin_amount, amount)
     loading_into_mixer_run = 1  # True
 
+    # Формируем статус (добавлено!)
+    if bin_amount >= amount:
+        status_val = "success"
+    elif bin_amount > 0:
+        status_val = "insufficient"
+    else:
+        status_val = "missing"
+
     # Сохраняем новый запрос в таблицу requests
     conn = get_connection()
     try:
@@ -166,6 +174,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     return {
         "request_id": request_id,
+        "status": status_val,
         "additional_loading": additional_loading,
         "amount": delivered_amount,
         "start_loading": True

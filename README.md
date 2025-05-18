@@ -38,7 +38,7 @@ http POST http://127.0.0.1:8000/ingredient/ Authorization:"Bearer eyJhbGciOiJIUz
 }
 
 ### Подтверждение готовности к загрузке POST /confirm_start_loading/
-http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc0OTk3NzEyNH0.8vYIhoPTqhbYmMERamNnhCzBDHntucK8Hu-19PaBIZA" ingredient_id="A3G7H1P9QZ" feed_mixer_id="00000000000004" bin_id="02" amount:=100
+http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc0OTk3NzEyNH0.8vYIhoPTqhbYmMERamNnhCzBDHntucK8Hu-19PaBIZA" ingredient_id="A3G7H1P9QZ" feed_mixer_id="M004" bin_id="01" amount:=100
 
 Ответ:
 {
@@ -55,7 +55,8 @@ http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJ
     "detail": "Could not validate credentials"
 }
 
-####################################
+---------------------------------------------------------------------
+
 docker mySQL + phpMyAdfmin
 phpMuAdmin    http://localhost:8081
 запуск:
