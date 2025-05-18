@@ -1,9 +1,9 @@
 from fastapi import HTTPException, status
 from typing import Dict, Any
 from db_mysql import get_connection
+import uuid
 from logger import logger  # импортируем логгер
 
-# Получить ингредиент и все его бункеры
 def get_ingredient_bins_from_db(ingredient_id):
     conn = get_connection()
     try:
@@ -12,6 +12,7 @@ def get_ingredient_bins_from_db(ingredient_id):
             cursor.execute("SELECT * FROM ingredients WHERE ingredient_id=%s", (ingredient_id,))
             ingredient = cursor.fetchone()
             if not ingredient:
+                logger.warning(f"Ингредиент {ingredient_id} не найден!")
                 return None
 
             cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s", (ingredient_id,))
@@ -21,23 +22,31 @@ def get_ingredient_bins_from_db(ingredient_id):
                 "ingredient": ingredient,
                 "bins": bins
             }
+    except Exception as e:
+        logger.error(f"Ошибка при получении данных из БД: {e}", exc_info=True)
+        raise
     finally:
         conn.close()
 
-# Проверить наличие миксера
 def mixer_exists(feed_mixer_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT 1 FROM mixers WHERE mixer_id=%s", (feed_mixer_id,))
-            return cursor.fetchone() is not None
+            exists = cursor.fetchone() is not None
+            if not exists:
+                logger.warning(f"Миксер {feed_mixer_id} не найден в базе!")
+            return exists
+    except Exception as e:
+        logger.error(f"Ошибка при проверке миксера: {e}", exc_info=True)
+        raise
     finally:
         conn.close()
 
-# POST /ingredient/
 def handle_ingredient_request(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "amount"]
     if not all(field in data for field in required_fields):
+        logger.warning("handle_ingredient_request: Не все обязательные поля присутствуют в запросе")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
@@ -50,6 +59,7 @@ def handle_ingredient_request(data: Dict[str, Any]):
 
     result = get_ingredient_bins_from_db(ingredient_id)
     if not result or not result["bins"]:
+        logger.warning(f"Ингредиент {ingredient_id} не найден или отсутствуют бункеры!")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
@@ -57,7 +67,6 @@ def handle_ingredient_request(data: Dict[str, Any]):
 
     bins = result["bins"]
 
-    # 1. Проверяем, хватает ли в ОДНОМ бункере
     for bin in bins:
         if bin["amount"] >= amount:
             logger.info(f"Найден подходящий бункер: {bin['bin_id']}")
@@ -68,11 +77,9 @@ def handle_ingredient_request(data: Dict[str, Any]):
                 "bin_id": bin["bin_id"]
             }
 
-    # 2. Считаем суммарное количество во всех бункерах
     total_amount = sum(bin["amount"] for bin in bins)
     non_zero_bins = [bin for bin in bins if bin["amount"] > 0]
 
-    # 3. Если в нескольких бункерах есть суммарно достаточно
     if len(non_zero_bins) > 1 and total_amount >= amount:
         richest_bin = max(non_zero_bins, key=lambda b: b["amount"])
         logger.info(f"Достаточно ингредиента в нескольких бункерах, выдаём богатый: {richest_bin['bin_id']}")
@@ -83,7 +90,6 @@ def handle_ingredient_request(data: Dict[str, Any]):
             "bin_id": richest_bin["bin_id"]
         }
 
-    # 4. Если в одном бункере мало и в других нет вообще, или всего не хватает
     if non_zero_bins:
         bin = non_zero_bins[0]
         logger.info(f"Ингредиент есть только в одном бункере: {bin['bin_id']}")
@@ -94,7 +100,6 @@ def handle_ingredient_request(data: Dict[str, Any]):
             "bin_id": bin["bin_id"]
         }
 
-    # 5. Вообще нигде нет такого ингредиента
     logger.info(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
     return {
         "status": "missing",
@@ -103,11 +108,10 @@ def handle_ingredient_request(data: Dict[str, Any]):
         "bin_id": None
     }
 
-
-# POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):
+        logger.warning("handle_confirm_start_loading: Не все обязательные поля присутствуют в запросе")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required fields"
@@ -120,22 +124,23 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
 
-    # Проверка ингредиента и бункера
     result = get_ingredient_bins_from_db(ingredient_id)
     if not result:
+        logger.warning(f"Ингредиент {ingredient_id} не найден!")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
         )
     bin_found = next((bin for bin in result["bins"] if bin["bin_id"] == bin_id), None)
     if not bin_found:
+        logger.warning(f"Бункер {bin_id} не найден!")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found"
         )
 
-    # Проверка миксера
     if not mixer_exists(feed_mixer_id):
+        logger.warning(f"Миксер {feed_mixer_id} не найден!")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Feed mixer not found"
@@ -144,10 +149,10 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     bin_amount = bin_found["amount"]
     additional_loading = bin_amount < amount
 
+    request_id = str(uuid.uuid4())
     delivered_amount = min(bin_amount, amount)
     loading_into_mixer_run = 1  # True
 
-    # Формируем статус (добавлено!)
     if bin_amount >= amount:
         status_val = "success"
     elif bin_amount > 0:
@@ -155,29 +160,33 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     else:
         status_val = "missing"
 
-    # Сохраняем новый запрос в таблицу requests (ID автоинкремент)
+    logger.info(f"Запись нового запроса: request_id={request_id}, status={status_val}, requested_amount={amount}")
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
                 INSERT INTO requests (
+                    request_id,
                     mixer_id,
                     bin_id,
                     ingredient_id,
                     requested_amount,
                     loading_into_mixer_run
-                ) VALUES ( %s, %s, %s, %s, %s)
+                ) VALUES ( %s, %s, %s, %s, %s, %s)
             """, (
+                request_id,
                 feed_mixer_id,
                 bin_id,
                 ingredient_id,
                 amount,
                 loading_into_mixer_run
             ))
-            request_id = cursor.lastrowid  # новый номер!
-            logger.info(f"Запись нового запроса: request_id={request_id}, status={status_val}, requested_amount={amount}")
+    except Exception as e:
+        logger.error(f"Ошибка при записи запроса в БД: {e}", exc_info=True)
+        raise
     finally:
-        conn.close() 
+        conn.close()
 
     return {
         "request_id": request_id,
@@ -187,14 +196,16 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         "start_loading": True
     }
 
-# функция для получения всех ингредиентов (не используется)
 def get_all_ingredients():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM ingredients")
             data = cursor.fetchall()
-            logger.info(f"Найдено {len(data)} ингредиентов")
+            logger.info(f"Получено {len(data)} ингредиентов")
             return data
+    except Exception as e:
+        logger.error(f"Ошибка при получении всех ингредиентов: {e}", exc_info=True)
+        raise
     finally:
         conn.close()
