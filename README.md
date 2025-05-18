@@ -15,7 +15,7 @@ python app.py
 
 Сервер uvucorn доступен по адресу 127.0.0.1:8000
 
-# запрос токена POST /login/
+### запрос токена POST /login/
 http -f POST http://127.0.0.1:8000/login username=admin password=password
 
 Ответ:
@@ -26,7 +26,7 @@ http -f POST http://127.0.0.1:8000/login username=admin password=password
 
 
 
-# Запрос на загрузку ингредиента POST /ingredient/ (одной строкой)
+### Запрос на загрузку ингредиента POST /ingredient/ (одной строкой)
 http POST http://127.0.0.1:8000/ingredient/ Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc0OTk3NzEyNH0.8vYIhoPTqhbYmMERamNnhCzBDHntucK8Hu-19PaBIZA" ingredient_id="X9V2K4B7MN" amount:=500
 
 Ответ:
@@ -37,7 +37,7 @@ http POST http://127.0.0.1:8000/ingredient/ Authorization:"Bearer eyJhbGciOiJIUz
     "status": "success"
 }
 
-#Подтверждение готовности к загрузке POST /confirm_start_loading/
+### Подтверждение готовности к загрузке POST /confirm_start_loading/
 http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc0OTk3NzEyNH0.8vYIhoPTqhbYmMERamNnhCzBDHntucK8Hu-19PaBIZA" ingredient_id="A3G7H1P9QZ" feed_mixer_id="00000000000004" bin_id="02" amount:=100
 
 Ответ:
