@@ -171,7 +171,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                 logger.warning(f"mixer_id '{feed_mixer_id}' не обнаржен ни у одного из бункеров")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No bin assigned to mixer {feed_mixer_id}"
+                    detail=f"mixer_id '{feed_mixer_id}' is not assigned to any bin."
                 )
     finally:
         conn.close()
