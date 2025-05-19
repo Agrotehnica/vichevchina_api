@@ -8,4 +8,5 @@ generate_requirements.py
 *.old
 *.in
 *.tmp
+*.zip
 
