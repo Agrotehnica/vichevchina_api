@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+mysql_data/
+mysql_data_test/
+docker/
+docker_mySQL/
+.git/
+.vscode/
+.idea/
+venv/
+.gitignore
+*.docx
+*.tmp
+*.zip
