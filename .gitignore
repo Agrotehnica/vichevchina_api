@@ -1,7 +1,11 @@
 aapi/
 __pycache__/
 mysql_data/
+mysql_data_test/
+docker/
+docker_mySQL/
 generate_requirements.py
 *.old
 *.in
 *.tmp
+

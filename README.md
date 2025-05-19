@@ -17,6 +17,7 @@ python app.py
 
 ### запрос токена POST /login/
 http -f POST http://127.0.0.1:8000/login username=вася password=K2lq
+http -f POST http://127.0.0.1:8000/login username=петя password=a7xP
 
 Ответ:
 {
@@ -60,7 +61,7 @@ http POST http://127.0.0.1:8000/confirm_start_loading/ Authorization:"Bearer eyJ
 ---------------------------------------------------------------------
 
 docker mySQL + phpMyAdfmin
-phpMuAdmin    http://localhost:8081
+phpMyAdmin    http://localhost:8081 (8080)
 запуск:
 docker start mysql-test
 или из графической облочки Docker Engine
