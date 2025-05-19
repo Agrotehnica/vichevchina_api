@@ -16,7 +16,7 @@ def get_ingredient_bins_from_db(ingredient_id):
 
             cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s", (ingredient_id,))
             bins = cursor.fetchall()
-            logger.info(f"Найдено {len(bins)} бункеров для ингредиента {ingredient_id}")
+            logger.info(f"Найдено {len(bins)} бункеров с ингредиентом {ingredient_id}")
             return {
                 "ingredient": ingredient,
                 "bins": bins
@@ -104,7 +104,6 @@ def handle_ingredient_request(data: Dict[str, Any]):
     }
 
 
-# POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):
@@ -120,7 +119,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
 
-    # Проверка ингредиента и бункера
+    # 1. Проверяем существование ингредиента и наличие бункера
     result = get_ingredient_bins_from_db(ingredient_id)
     if not result:
         raise HTTPException(
@@ -134,7 +133,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
             detail="Bin not found"
         )
 
-    # Проверка миксера
+    # 2. Проверяем наличие миксера
     if not mixer_exists(feed_mixer_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -143,11 +142,10 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     bin_amount = bin_found["amount"]
     additional_loading = bin_amount < amount
-
     delivered_amount = min(bin_amount, amount)
     loading_into_mixer_run = 1  # True
 
-    # Формируем статус (добавлено!)
+    # Формируем статус
     if bin_amount >= amount:
         status_val = "success"
     elif bin_amount > 0:
@@ -155,7 +153,30 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     else:
         status_val = "missing"
 
-    # Сохраняем новый запрос в таблицу requests (ID автоинкремент)
+    # 3. Проверяем соответствие bin_id и mixer_id в bins
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT bin_id FROM bins WHERE mixer_id = %s", (feed_mixer_id,))
+            row = cursor.fetchone()
+            if row:
+                mixer_bin_id = row["bin_id"]
+                if mixer_bin_id != bin_id:
+                    logger.warning(f"mixer_id '{feed_mixer_id}' обнаружен у bin_id '{mixer_bin_id}' вместо ожидаемого bin_id '{bin_id}'")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"mixer_id '{feed_mixer_id}' is found with bin_id '{mixer_bin_id}' instead of the requested bin_id '{bin_id}'."
+                    )
+            else:
+                logger.warning(f"mixer_id '{feed_mixer_id}' не обнаржен ни у одного из бункеров")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No bin assigned to mixer {feed_mixer_id}"
+                )
+    finally:
+        conn.close()
+
+    # 4. Сохраняем новый запрос в таблицу requests (ID автоинкремент)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -177,7 +198,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
             request_id = cursor.lastrowid  # новый номер!
             logger.info(f"Запись нового запроса: request_id={request_id}, status={status_val}, requested_amount={amount}")
     finally:
-        conn.close() 
+        conn.close()
 
     return {
         "request_id": request_id,
@@ -186,15 +207,3 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         "amount": delivered_amount,
         "start_loading": True
     }
-
-# функция для получения всех ингредиентов (не используется)
-def get_all_ingredients():
-    conn = get_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM ingredients")
-            data = cursor.fetchall()
-            logger.info(f"Найдено {len(data)} ингредиентов")
-            return data
-    finally:
-        conn.close()
