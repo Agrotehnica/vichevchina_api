@@ -3,7 +3,7 @@ services:
     image: mysql:8.4
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: agrotechika   # надежный пароль!
+      MYSQL_ROOT_PASSWORD: root   # надежный пароль!
       MYSQL_DATABASE: db_api
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
@@ -16,8 +16,8 @@ services:
     image: phpmyadmin
     restart: always
     ports:
-      - "8081:80"
+      - "8080:80"
     environment:
       PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: agrotechika   # Должен совпадать с тем, что выше!
+      MYSQL_ROOT_PASSWORD: root   # Должен совпадать с тем, что выше!
 
