@@ -4,6 +4,7 @@ mysql_data/
 mysql_data_test/
 docker/
 docker_mySQL/
+docker_mySQL+phpMyAdmin/
 generate_requirements.py
 *.old
 *.in

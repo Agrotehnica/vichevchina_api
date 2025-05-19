@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     MYSQL_HOST: str = "localhost"
     MYSQL_USER: str = "myuser"
     MYSQL_PASSWORD: str = "mypassword"
-    MYSQL_DB: str = "db_api"
+    MYSQL_DB: str = "feedmill_db"
 
     class Config:
         case_sensitive = True

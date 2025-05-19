@@ -4,10 +4,12 @@ mysql_data/
 mysql_data_test/
 docker/
 docker_mySQL/
+docker_mySQL+phpMyAdmin/
 .git/
 .vscode/
 .idea/
 venv/
+aapi/
 .gitignore
 *.docx
 *.tmp

@@ -4,7 +4,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_api
+      MYSQL_DATABASE: feedmill_db
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
     ports:
@@ -34,7 +34,7 @@ services:
       MYSQL_HOST: db
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
-      MYSQL_DB: db_api
+      MYSQL_DB: feedmill_db
       # Можно добавить еще переменные для секретного ключа и пр.
     ports:
       - "8000:8000"
