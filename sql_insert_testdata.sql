@@ -1,3 +1,6 @@
+-- указываем кодировку
+SET NAMES utf8mb4;
+
 -- миксеры
 INSERT INTO mixers (mixer_id) VALUES 
 ('0'),
