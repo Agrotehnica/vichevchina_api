@@ -11,9 +11,8 @@ services:
       - "3306:3306"
     volumes:
       - ./mysql_data:/var/lib/mysql
-      - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql
-      - ./sql_insert_testdata.sql:/docker-entrypoint-initdb.d/2.sql
-
+      - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql         # создание таблиц СРАБАТЫВАЕТ ТОЛЬКО ПРИ ПЕРВОМ ЗАПУСКЕ
+      - ./sql_insert_testdata.sql:/docker-entrypoint-initdb.d/2.sql     # наполнение тестовыми данными
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
@@ -38,5 +37,5 @@ services:
       # Можно добавить еще переменные для секретного ключа и пр.
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
+#    volumes:
+#      - .:/app
