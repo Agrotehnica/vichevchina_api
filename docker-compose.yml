@@ -24,22 +24,22 @@ services:
       MYSQL_ROOT_PASSWORD: agrt
 
 # разкоментировать для полного докера
-#services:
-#  web:
-#    image: nginx
-#  fastapi:
-#    build: .
-#    container_name: fastapi-app
-#    restart: always
-#    depends_on:
-#      - db
-#    environment:
-#      MYSQL_HOST: db
-#      MYSQL_USER: myuser
-#      MYSQL_PASSWORD: mypassword
-#      MYSQL_DB: feedmill_db
-#      # Можно добавить еще переменные для секретного ключа и пр.
-#    ports:
-#      - "8000:8000"
+services:
+  web:
+    image: nginx
+  fastapi:
+    build: .
+    container_name: fastapi-app
+    restart: always
+    depends_on:
+      - db
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_DB: feedmill_db
+       Можно добавить еще переменные для секретного ключа и пр.
+    ports:
+      - "8000:8000"
 ##    volumes:
 ##     - .:/app
