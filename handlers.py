@@ -101,7 +101,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     bin_id = data["bin_id"]
     amount = int(data["amount"])
 
-    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
+    
 
     # 1. Проверяем существование ингредиента и наличие бункера
     result = get_ingredient_bins_from_db(ingredient_id)
@@ -180,6 +180,8 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                 )
     finally:
         conn.close()
+
+    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}, нехватает {missing_amount}")
 
     # 4. Сохраняем новый запрос в таблицу requests (ID автоинкремент)
     conn = get_connection()
