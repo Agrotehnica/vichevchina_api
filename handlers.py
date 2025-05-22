@@ -67,12 +67,15 @@ def handle_ingredient_request(data: Dict[str, Any]):
             detail="missing"
         )
 
-    # Если общего количества недостаточно на всём складе, возвращаем ошибку
+    # Если общего количества недостаточно на всём складе, возвращаем ошибку с доступным количеством
     if total_amount < amount:
         logger.warning(f"Недостаточно ингредиента на складе: {total_amount} доступно, {amount} запрошено")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="insufficient"
+            detail={
+                "error": "insufficient",
+                "available": total_amount
+            }
         )
 
     # Найдём бункер с максимальным количеством ингредиента
@@ -84,7 +87,8 @@ def handle_ingredient_request(data: Dict[str, Any]):
         "status": статус,
         "additional_loading": выдаётся < amount,
         "amount": выдаётся,
-        "bin_id": richest_bin["bin_id"]
+        "bin_id": richest_bin["bin_id"],
+        "available": total_amount
     }
 
 # POST /confirm_start_loading/
@@ -101,7 +105,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     bin_id = data["bin_id"]
     amount = int(data["amount"])
 
-    
+    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
 
     # 1. Проверяем существование ингредиента и наличие бункера
     result = get_ingredient_bins_from_db(ingredient_id)
@@ -180,8 +184,6 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                 )
     finally:
         conn.close()
-
-    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}, нехватает {missing_amount}")
 
     # 4. Сохраняем новый запрос в таблицу requests (ID автоинкремент)
     conn = get_connection()
