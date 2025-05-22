@@ -2,13 +2,13 @@
 SET NAMES utf8mb4;
 
 -- миксеры
-INSERT INTO mixers (mixer_id) VALUES 
-('0'),
-('M001'),
-('M002'),
-('M003'),
-('M004'),
-('M005');
+INSERT INTO mixers (mixer_id, rfid_1, rfid_2) VALUES 
+('0', NULL, NULL),
+('M001', 'rfid_001', 'rfid_002'),
+('M002', 'rfid_003', NULL),
+('M003', NULL, NULL),
+('M004', NULL, NULL),
+('M005', NULL, NULL);
 
 -- ингридиенты
 INSERT INTO ingredients (ingredient_id, name) VALUES

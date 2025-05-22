@@ -6,7 +6,9 @@ CREATE TABLE ingredients (
 
 -- 2. Таблица миксеров
 CREATE TABLE mixers (
-    mixer_id VARCHAR(255) PRIMARY KEY NOT NULL
+    mixer_id VARCHAR(255) PRIMARY KEY NOT NULL,
+    rfid_1 VARCHAR(255) DEFAULT NULL,
+    rfid_2 VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3. Таблица бункеров
