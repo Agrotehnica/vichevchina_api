@@ -57,53 +57,40 @@ def handle_ingredient_request(data: Dict[str, Any]):
 
     bins = result["bins"]
 
-    # 1. Проверяем, хватает ли в ОДНОМ бункере
+    total_amount = sum(bin["amount"] for bin in bins)
+
+    if total_amount == 0:
+        logger.warning(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="missing"
+        )
+
+    if total_amount < amount:
+        logger.warning(f"Недостаточно ингредиента на складе: {total_amount} доступно, {amount} запрошено")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="insufficient"
+        )
+
     for bin in bins:
-        if bin["amount"] >= amount:
-            logger.info(f"Найден подходящий бункер: {bin['bin_id']}")
+        if bin["amount"] > 0:
+            выдаётся = min(bin["amount"], amount)
+            статус = "success" if выдаётся == amount else "insufficient"
+            logger.info(f"Отгрузка из бункера {bin['bin_id']}: {выдаётся} из {amount}, всего в бункере: {bin['amount']}")
             return {
-                "status": "success",
-                "additional_loading": False,
-                "amount": bin["amount"],
+                "status": статус,
+                "additional_loading": выдаётся < amount,
+                "amount": выдаётся,
                 "bin_id": bin["bin_id"]
             }
 
-    # 2. Считаем суммарное количество во всех бункерах
-    total_amount = sum(bin["amount"] for bin in bins)
-    non_zero_bins = [bin for bin in bins if bin["amount"] > 0]
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Unexpected error in ingredient handling"
+    )
 
-    # 3. Если в нескольких бункерах есть суммарно достаточно
-    if len(non_zero_bins) > 1 and total_amount >= amount:
-        richest_bin = max(non_zero_bins, key=lambda b: b["amount"])
-        logger.info(f"Достаточно ингредиента в нескольких бункерах, выдаём богатый: {richest_bin['bin_id']}")
-        return {
-            "status": "insufficient",
-            "additional_loading": True,
-            "amount": richest_bin["amount"],
-            "bin_id": richest_bin["bin_id"]
-        }
-
-    # 4. Если в одном бункере мало и в других нет вообще, или всего не хватает
-    if non_zero_bins:
-        bin = non_zero_bins[0]
-        logger.info(f"Ингредиент есть только в одном бункере: {bin['bin_id']}")
-        return {
-            "status": "insufficient",
-            "additional_loading": False,
-            "amount": bin["amount"],
-            "bin_id": bin["bin_id"]
-        }
-
-    # 5. Вообще нигде нет такого ингредиента
-    logger.info(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
-    return {
-        "status": "missing",
-        "additional_loading": False,
-        "amount": 0,
-        "bin_id": None
-    }
-
-
+# POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):
@@ -119,21 +106,37 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
     logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
 
-    # 1. Проверяем существование ингредиента и наличие бункера
     result = get_ingredient_bins_from_db(ingredient_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingredient not found"
         )
-    bin_found = next((bin for bin in result["bins"] if bin["bin_id"] == bin_id), None)
+
+    bins = result["bins"]
+
+    total_amount = sum(bin["amount"] for bin in bins)
+    if total_amount == 0:
+        logger.warning(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="missing"
+        )
+
+    if total_amount < amount:
+        logger.warning(f"Недостаточно ингредиента на складе: {total_amount} доступно, {amount} запрошено")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="insufficient"
+        )
+
+    bin_found = next((bin for bin in bins if bin["bin_id"] == bin_id), None)
     if not bin_found:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bin not found"
         )
 
-    # 2. Проверяем наличие миксера
     if not mixer_exists(feed_mixer_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -141,19 +144,18 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
         )
 
     bin_amount = bin_found["amount"]
-    additional_loading = bin_amount < amount
     delivered_amount = min(bin_amount, amount)
-    loading_into_mixer_run = 1  # True
+    additional_loading = delivered_amount < amount
+    loading_into_mixer_run = 1
 
-    # Формируем статус
-    if bin_amount >= amount:
-        status_val = "success"
-    elif bin_amount > 0:
-        status_val = "insufficient"
-    else:
-        status_val = "missing"
+    if delivered_amount == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="missing"
+        )
 
-    # 3. Проверяем соответствие bin_id и mixer_id в bins
+    status_val = "success" if delivered_amount == amount else "insufficient"
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -176,7 +178,6 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     finally:
         conn.close()
 
-    # 4. Сохраняем новый запрос в таблицу requests (ID автоинкремент)
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
@@ -195,7 +196,7 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
                 amount,
                 loading_into_mixer_run
             ))
-            request_id = cursor.lastrowid  # новый номер!
+            request_id = cursor.lastrowid
             logger.info(f"Запись нового запроса: request_id={request_id}, status={status_val}, requested_amount={amount}")
     finally:
         conn.close()
