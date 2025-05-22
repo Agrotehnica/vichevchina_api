@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 from auth import create_access_token, get_current_user_from_token, authenticate_user
@@ -33,11 +32,16 @@ class ConfirmStartLoadingRequest(BaseModel):
     bin_id: str
     amount: int
 
-# Эндпоинт авторизации через БД users
+# Новая модель для логина
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# Эндпоинт авторизации через JSON
 @app.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    if authenticate_user(form_data.username, form_data.password):
-        access_token = create_access_token(data={"sub": form_data.username})
+async def login(login_data: LoginRequest):
+    if authenticate_user(login_data.username, login_data.password):
+        access_token = create_access_token(data={"sub": login_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     raise HTTPException(status_code=400, detail="Incorrect username or password")
 
