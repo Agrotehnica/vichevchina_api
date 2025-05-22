@@ -24,9 +24,6 @@ services:
       MYSQL_ROOT_PASSWORD: agrt
 
 # разкоментировать для полного докера
-services:
-  web:
-    image: nginx
   fastapi:
     build: .
     container_name: fastapi-app
