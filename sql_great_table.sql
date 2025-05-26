@@ -16,7 +16,7 @@ CREATE TABLE bins (
     bin_id VARCHAR(255) PRIMARY KEY NOT NULL,
     ingredient_id VARCHAR(255) NOT NULL,
     amount INT NOT NULL,
-    mixer_id VARCHAR(255) NOT NULL DEFAULT '0',
+    rfid VARCHAR(255),
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id),
     FOREIGN KEY (mixer_id) REFERENCES mixers(mixer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

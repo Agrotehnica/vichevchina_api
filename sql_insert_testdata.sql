@@ -4,8 +4,8 @@ SET NAMES utf8mb4;
 -- миксеры
 INSERT INTO mixers (mixer_id, rfid_1, rfid_2) VALUES 
 ('0', NULL, NULL),
-('M001', 'rfid_001', 'rfid_002'),
-('M002', 'rfid_003', NULL),
+('M001', 'ABC_r', 'ABC_l'),
+('M002', 'CDE_r', NULL),
 ('M003', NULL, NULL),
 ('M004', NULL, NULL),
 ('M005', NULL, NULL);
@@ -23,9 +23,9 @@ INSERT INTO ingredients (ingredient_id, name) VALUES
 ('M2N4B6V8CX', 'Acana'),
 ('S1D3F5G7HJ', 'Pro Plan');
 
-INSERT INTO bins (bin_id, ingredient_id, amount, mixer_id) VALUES
-('01', 'A3G7H1P9QZ', 200, 'M003'),
-('02', 'X9V2K4B7MN', 1000, 'M002'),
+INSERT INTO bins (bin_id, ingredient_id, amount, rfid) VALUES
+('01', 'A3G7H1P9QZ', 200, 'ABC_l'),
+('02', 'X9V2K4B7MN', 1000, 'CDE_r'),
 ('03', 'L8J6S0U1DQ', 357, '0'),
 ('04', 'P4Q3W2E1ZR', 829, '0'),
 ('05', 'T5Y7U8I9OP', 12, '0'),
