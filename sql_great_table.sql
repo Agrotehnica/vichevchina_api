@@ -14,9 +14,9 @@ CREATE TABLE mixers (
 -- 3. Таблица бункеров
 CREATE TABLE bins (
     bin_id VARCHAR(255) PRIMARY KEY NOT NULL,
-    ingredient_id VARCHAR(255) NOT NULL,
-    amount INT NOT NULL,
-    rfid VARCHAR(255),
+    ingredient_id VARCHAR(255) NULL,
+    amount INT NULL,
+    rfid VARCHAR(255) NULL,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

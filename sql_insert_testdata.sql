@@ -26,7 +26,7 @@ INSERT INTO ingredients (ingredient_id, name) VALUES
 INSERT INTO bins (bin_id, ingredient_id, amount, rfid) VALUES
 ('01', 'A3G7H1P9QZ', 200, 'ABC_l'),
 ('02', 'X9V2K4B7MN', 1000, 'CDE_r'),
-('03', 'L8J6S0U1DQ', 357, '0'),
+('03', NULL, 357, '0'),
 ('04', 'P4Q3W2E1ZR', 829, '0'),
 ('05', 'T5Y7U8I9OP', 12, '0'),
 ('06', 'C3V5B6N7MQ', 747, '0'),
