@@ -17,8 +17,7 @@ CREATE TABLE bins (
     ingredient_id VARCHAR(255) NOT NULL,
     amount INT NOT NULL,
     rfid VARCHAR(255),
-    FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id),
-    FOREIGN KEY (mixer_id) REFERENCES mixers(mixer_id)
+    FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 4. Таблица запросов (request_id — автоинкремент!)
