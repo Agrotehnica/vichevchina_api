@@ -12,10 +12,26 @@ def get_ingredient_bins_from_db(ingredient_id):
             cursor.execute("SELECT * FROM ingredients WHERE ingredient_id=%s", (ingredient_id,))
             ingredient = cursor.fetchone()
             if not ingredient:
+                logger.warning(f"Запрашиваемый ингредиент {ingredient_id} не найден в базе данных")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "code": 404.6,
+                    "message": "Ingredient id not found"}           
+                            )    
                 return None
 
             cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s", (ingredient_id,))
             bins = cursor.fetchall()
+            if not bins:
+                logger.info(f"Бункеров с ингредиентом {ingredient_id} не найдено")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "code": 404.7,
+                    "message": "Ingredient bins not found"}           
+                                    )
+
             logger.info(f"Найдено {len(bins)} бункеров с ингредиентом {ingredient_id}")
             return {
                 "ingredient": ingredient,
@@ -34,59 +50,63 @@ def mixer_exists(feed_mixer_id):
     finally:
         conn.close()
 
-# POST /ingredient/
-def handle_ingredient_request(data: Dict[str, Any]):
-    required_fields = ["ingredient_id", "amount"]
-    if not all(field in data for field in required_fields):
+# Проверка общего количества
+def check_amount(total_amount, ingredient_id, amount):
+
+    # Проверка если ингредиента на складе меньше или равно 0 кг возвращаем ошибку 404.2  missing Ингредиента нет на складе
+    if total_amount <= 0:
+        logger.warning(f"Количество {ingredient_id} во всех бункерах меньше или равно 0")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing required fields"
+            detail={
+                "code": 400.2,
+                "message": "missing"}
         )
-
-    ingredient_id = data["ingredient_id"]
-    amount = int(data["amount"])
-
-    logger.info(f"Запрошен ингредиент: {ingredient_id}, количество: {amount}")
-
-    result = get_ingredient_bins_from_db(ingredient_id)
-    if not result or not result["bins"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ingredient not found"
-        )
-
-    bins = result["bins"]
-
-    total_amount = sum(bin["amount"] for bin in bins)
-
-    # Если ингредиента вообще нет на складе
-    if total_amount == 0:
-        logger.warning(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="missing"
-        )
-
+    
     # Если общего количества недостаточно на всём складе, возвращаем ошибку с доступным количеством
     if total_amount < amount:
         logger.warning(f"Недостаточно ингредиента на складе: {total_amount} доступно, {amount} запрошено")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error": "insufficient",
+                "code": 400,
+                "message": "insufficient",
                 "available": total_amount
             }
         )
+    return True
+
+# POST /ingredient/
+def handle_ingredient_request(data: Dict[str, Any]):
+    required_fields = ["ingredient_id", "amount"]
+    
+    if not all(field in data for field in required_fields):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ошибка запроса к БД"
+        )
+
+    ingredient_id = data["ingredient_id"]
+    amount = int(data["amount"])
+
+    result = get_ingredient_bins_from_db(ingredient_id)
+    bins = result["bins"]
+    total_amount = sum(bin["amount"] for bin in bins)
+
+    logger.info(f"Запрошен ингредиент: {ingredient_id}, количество: {amount}")
+
+    # Проверка количества ингридиента на складе 
+    check_amount (total_amount, ingredient_id, amount)
 
     # Найдём бункер с максимальным количеством ингредиента
     richest_bin = max(bins, key=lambda b: b["amount"])
-    выдаётся = min(richest_bin["amount"], amount)
-    статус = "success" if выдаётся == amount else "insufficient"
-    logger.info(f"Отгрузка из самого полного бункера {richest_bin['bin_id']}: {выдаётся} из {amount}, всего в бункере: {richest_bin['amount']}")
+    will_be_issued = min(richest_bin["amount"], amount)
+    status = "success" if will_be_issued == amount else "insufficient" # !!!!!!!!!!!!!!!!!!!!!
+    logger.info(f"Отгрузка из самого полного бункера {richest_bin['bin_id']}: {will_be_issued} из {amount}, всего в бункере: {richest_bin['amount']}")
     return {
-        "status": статус,
-        "additional_loading": выдаётся < amount,
-        "amount": выдаётся,
+        "status": status,
+        "additional_loading": will_be_issued < amount,
+        "amount": will_be_issued,
         "bin_id": richest_bin["bin_id"],
         "available": total_amount
     }
@@ -105,39 +125,25 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     bin_id = data["bin_id"]
     amount = int(data["amount"])
 
-    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, количество {amount}")
-
-    # 1. Проверяем существование ингредиента и наличие бункера
+    # 
     result = get_ingredient_bins_from_db(ingredient_id)
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ingredient not found"
-        )
-
     bins = result["bins"]
 
-    # 1.5 Проверяем общее количество на складе
+    # Получаем общее количество на складе
     total_amount = sum(bin["amount"] for bin in bins)
-    if total_amount == 0:
-        logger.warning(f"Ингредиент {ingredient_id} отсутствует во всех бункерах")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="missing"
-        )
 
-    if total_amount < amount:
-        logger.warning(f"Недостаточно ингредиента на складе: {total_amount} доступно, {amount} запрошено")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="insufficient"
-        )
+    # Проверка доступного количества ингридиента на складе 
+    check_amount (total_amount, ingredient_id, amount)
 
+    # Проверка соответствия бункер <-> ингридиент
     bin_found = next((bin for bin in bins if bin["bin_id"] == bin_id), None)
     if not bin_found:
+        logger.warning(f"Бункер {bin_id} отсутствует в списке бункеров с запрошенным ингридиентом")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bin not found"
+            detail={
+                "code": 404.1,
+                "message": "Bin not found"}            
         )
 
     # 2. Проверка соответствия rfid ↔ mixer_id
@@ -189,14 +195,16 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
     additional_loading = delivered_amount < amount
     loading_into_mixer_run = 1  # True
 
-    if delivered_amount == 0:
-        logger.warning(f"Бункер {bin_id} не содержит достаточного количества ингредиента для загрузки")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="missing"
-        )
+#    if delivered_amount == 0:
+#       logger.warning(f"Бункер {bin_id} не содержит достаточного количества ингредиента для загрузки")
+#       raise HTTPException(
+#           status_code=status.HTTP_400_BAD_REQUEST,
+#           detail="missing"
+#       )
 
     status_val = "success" if delivered_amount == amount else "insufficient"
+
+    logger.info(f"Старт загрузки: ингредиент {ingredient_id}, миксер {feed_mixer_id}, бункер {bin_id}, запрощшено количество {amount}")
 
     # 4. Сохраняем новый запрос в таблицу requests (ID автоинкремент)
     conn = get_connection()

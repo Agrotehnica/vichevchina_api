@@ -32,7 +32,7 @@ class ConfirmStartLoadingRequest(BaseModel):
     bin_id: str
     amount: int
 
-# Новая модель для логина
+# модель для логина
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -43,7 +43,12 @@ async def login(login_data: LoginRequest):
     if authenticate_user(login_data.username, login_data.password):
         access_token = create_access_token(data={"sub": login_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
-    raise HTTPException(status_code=400, detail="Incorrect username or password")
+    raise HTTPException(
+        status_code=400,
+        detail={
+            "code": 400.1,
+            "message": "Incorrect username or password"}
+        )
 
 # Защищённые эндпоинты
 @app.post("/ingredient/", summary="Request ingredient loading")
