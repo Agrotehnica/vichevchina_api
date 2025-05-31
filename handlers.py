@@ -153,20 +153,36 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
             cursor.execute("SELECT rfid FROM bins WHERE bin_id=%s", (bin_id,))
             row = cursor.fetchone()
             rfid = row["rfid"] if row else None
-            if not rfid:
-                logger.warning(f"rfid отсутсвует у бункера {bin_id}")
-                raise HTTPException(status_code=400, detail="rfid missing")
+            if not rfid or rfid == '0':
+                logger.warning(f"у бункера {bin_id} не обнаружена  rfid")
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": 400.6,
+                        "message":"no rfid detected at bunker"}
+                    )
 
             cursor.execute("SELECT rfid_1, rfid_2 FROM mixers WHERE mixer_id = %s", (feed_mixer_id,))
             mixer_row = cursor.fetchone()
             if not mixer_row:
                 logger.warning(f"Миксер {feed_mixer_id} не найден")
-                raise HTTPException(status_code=404, detail="mixer not found")
+                raise HTTPException(
+                    status_code=404, 
+                    detail={
+                        "code": 400.2,
+                        "message": "mixer not found"}
+                )
 
             rfid_1, rfid_2 = mixer_row["rfid_1"], mixer_row["rfid_2"]
             if not rfid_1 and not rfid_2:
-                logger.warning(f"Миксер {feed_mixer_id} не содержит привязанных меток rfid")
-                raise HTTPException(status_code=400, detail="rfid tags missing")
+                logger.warning(f"Миксеру {feed_mixer_id} не заданы метки rfid")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                        "code": 400.3,
+                        "message": "rfid tags missing"}
+                )
+        
 
             cursor.execute("SELECT bin_id FROM bins WHERE rfid IN (%s, %s)", (rfid_1, rfid_2))
             linked_bins = cursor.fetchall()
@@ -174,17 +190,30 @@ def handle_confirm_start_loading(data: Dict[str, Any]):
 
             if not linked_bin_ids:
                 logger.warning(f"Миксер с метками rfid {rfid_1} или {rfid_2} не обнаружен ни у одного из бункеров")
-                raise HTTPException(status_code=404, 
-                                    detail=f"Mixer with {rfid_1} или {rfid_2} was not found at any of the bunkers")
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "code": 404.5,
+                        "message": f"Mixer with {rfid_1} or {rfid_2} was not found at any of the bunkers"}
+                )
 
             if len(linked_bin_ids) > 1:
                 logger.warning(f"Метки миксера обнаружены у нескольких бункеров: {linked_bin_ids}")
-                raise HTTPException(status_code=400, detail=f"rfid assigned to multiple bins")
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                    "code": 400.5,
+                    "message": f"rfid assigned to multiple bins"}
+                    )
 
             if linked_bin_ids[0] != bin_id:
                 logger.warning(f"Миксер с метками rfid обнаружен у bin_id {linked_bin_ids[0]} вместо ожидаемого {bin_id}")
-                raise HTTPException(status_code=400,
-                                    detail=f"Mixer with rfid tags detected at bin_id {linked_bin_ids[0]} instead of expected {bin_id}")
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": 400.4,
+                        "message": f"Mixer with rfid tags detected at bin_id {linked_bin_ids[0]} instead of expected {bin_id}"}
+                )
     finally:
         conn.close()
 
