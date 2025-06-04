@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:8.0
@@ -10,9 +12,10 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql_data:/var/lib/mysql
-      - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql         # создание таблиц СРАБАТЫВАЕТ ТОЛЬКО ПРИ ПЕРВОМ ЗАПУСКЕ
-      - ./sql_insert_testdata.sql:/docker-entrypoint-initdb.d/2.sql     # наполнение тестовыми данными
+      - mysql_data:/var/lib/mysql
+      - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./sql_insert_testdata.sql:/docker-entrypoint-initdb.d/2.sql
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
@@ -23,7 +26,6 @@ services:
       PMA_PORT: 3306
       MYSQL_ROOT_PASSWORD: agrt
 
-# разкоментировать для полного докера
   fastapi:
     build: .
     container_name: fastapi-app
@@ -35,8 +37,10 @@ services:
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
       MYSQL_DB: feedmill_db
-      
     ports:
       - "8000:8000"
-##    volumes:
-##     - .:/app
+#    volumes:
+#      - .:/app
+
+volumes:
+  mysql_data:
