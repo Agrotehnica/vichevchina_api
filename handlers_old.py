@@ -76,8 +76,7 @@ def check_amount(total_amount, ingredient_id, amount):
         )
     return True
 
-# ===POST /ingredient/===
-# бункер выбирается по самой старой дате last_loaded_at
+# POST /ingredient/
 def handle_ingredient_request(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "amount"]
     
@@ -99,27 +98,20 @@ def handle_ingredient_request(data: Dict[str, Any]):
     # Проверка количества ингридиента на складе 
     check_amount (total_amount, ingredient_id, amount)
 
-    # Найдём бункер с самой старой датой загрузки
-    bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None]
-    if bins_with_dates:
-        oldest_bin = min(bins_with_dates, key=lambda b: b["last_loaded_at"])
-    else:
-        oldest_bin = bins[0]
-
-    will_be_issued = min(oldest_bin["amount"], amount)
-    status = "success" if will_be_issued == amount else "insufficient"
-    logger.info(
-        f"Отгрузка из самого старого бункера {oldest_bin['bin_id']} (дата: {oldest_bin['last_loaded_at']}): {will_be_issued} из {amount}, всего в бункере: {oldest_bin['amount']}"
-    )
+    # Найдём бункер с ингредиентом с сортировкой по дате загрузк
+    richest_bin = max(bins, key=lambda b: b["amount"])
+    will_be_issued = min(richest_bin["amount"], amount)
+    status = "success" if will_be_issued == amount else "insufficient" # !!!!!!!!!!!!!!!!!!!!!
+    logger.info(f"Отгрузка из самого полного бункера {richest_bin['bin_id']}: {will_be_issued} из {amount}, всего в бункере: {richest_bin['amount']}")
     return {
         "status": status,
         "additional_loading": will_be_issued < amount,
         "amount": will_be_issued,
-        "bin_id": oldest_bin["bin_id"],
+        "bin_id": richest_bin["bin_id"],
         "available": total_amount
     }
 
-# === POST /confirm_start_loading/ ===
+# POST /confirm_start_loading/
 def handle_confirm_start_loading(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):
