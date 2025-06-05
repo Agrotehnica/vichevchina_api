@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from typing import Dict, Any
 from db_mysql import get_connection
 from logger import logger  # импортируем логгер
+import datetime
 
 # Получить ингредиент и все его бункеры
 def get_ingredient_bins_from_db(ingredient_id):
@@ -97,14 +98,18 @@ def handle_ingredient_request(data: Dict[str, Any]):
     logger.info(f"Запрошен ингредиент: {ingredient_id}, количество: {amount}")
 
     # Проверка количества ингридиента на складе 
-    check_amount (total_amount, ingredient_id, amount)
+    check_amount (total_amount, ingredient_id, amount)  
 
-    # Найдём бункер с самой старой датой загрузки
-    bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None]
+    # Найдём бункер с самой старой датой загрузки и положительной массой
+    #bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None]
+    bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None and b["amount"] > 0]    # ПЕРЕМЕННАЯ С МИНИМАЛЬНОЙ МАССОЙ В БУНКЕРЕ
     if bins_with_dates:
-        oldest_bin = min(bins_with_dates, key=lambda b: b["last_loaded_at"])
-    else:
-        oldest_bin = bins[0]
+        oldest_bin = min(
+            bins_with_dates,
+            key=lambda b: datetime.strptime(b["last_loaded_at"], "%Y-%m-%d %H:%M:%S")
+            if isinstance(b["last_loaded_at"], str)
+            else b["last_loaded_at"]
+        )
 
     will_be_issued = min(oldest_bin["amount"], amount)
     status = "success" if will_be_issued == amount else "insufficient"
