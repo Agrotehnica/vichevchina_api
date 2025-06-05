@@ -12,7 +12,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - .mysql_data:/var/lib/mysql
       - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql
       - ./sql_insert_testdata.sql:/docker-entrypoint-initdb.d/2.sql
 
@@ -39,8 +39,4 @@ services:
       MYSQL_DB: feedmill_db
     ports:
       - "8000:8000"
-#    volumes:
-#      - .:/app
 
-volumes:
-  mysql_data:
