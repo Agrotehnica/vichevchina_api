@@ -77,6 +77,16 @@ def check_amount(total_amount, ingredient_id, amount):
         )
     return True
 
+# парсим дату загрузки бункера, если ее нет - возвращаем 0 (самую старую)
+def parse_loaded_at(b):
+    # Если дата есть, парсим, если нет — считаем, что это 0 (очень старая дата)
+    if b["last_loaded_at"] is None:
+        return datetime.datetime.min
+    elif isinstance(b["last_loaded_at"], str):
+        return datetime.datetime.strptime(b["last_loaded_at"], "%Y-%m-%d %H:%M:%S")
+    else:
+        return b["last_loaded_at"]
+
 # ===POST /ingredient/===
 # бункер выбирается по самой старой дате last_loaded_at
 def handle_ingredient_request(data: Dict[str, Any]):
@@ -100,16 +110,13 @@ def handle_ingredient_request(data: Dict[str, Any]):
     # Проверка количества ингридиента на складе 
     check_amount (total_amount, ingredient_id, amount)  
 
-    # Найдём бункер с самой старой датой загрузки и положительной массой
+    # Найдём все бункера с положительной массой ингридиента
     #bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None]
-    bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None and b["amount"] > 0]    # ПЕРЕМЕННАЯ С МИНИМАЛЬНОЙ МАССОЙ В БУНКЕРЕ
-    if bins_with_dates:
-        oldest_bin = min(
-            bins_with_dates,
-            key=lambda b: datetime.strptime(b["last_loaded_at"], "%Y-%m-%d %H:%M:%S")
-            if isinstance(b["last_loaded_at"], str)
-            else b["last_loaded_at"]
-        )
+    #bins_with_dates = [b for b in bins if b["last_loaded_at"] is not None and b["amount"] > 0]
+    bins_with_dates = [b for b in bins if b["amount"] > 0]    # ПЕРЕМЕННАЯ С МИНИМАЛЬНОЙ МАССОЙ В БУНКЕРЕ
+
+    # из бункеров с полодительной массой выберем самы старый
+    oldest_bin = min(bins_with_dates, key=parse_loaded_at)
 
     will_be_issued = min(oldest_bin["amount"], amount)
     status = "success" if will_be_issued == amount else "insufficient"
