@@ -16,9 +16,9 @@ python app.py
 Сервер uvucorn доступен по адресу 127.0.0.1:8000
 
 ### запрос токена POST /login/
-http POST http://127.0.0.1:8000/login username="петя" password="a7xP"
+http POST http://178.44.122.53:8000/login username="петя" password="a7xP"
 
-http -f POST http://127.0.0.1:8000/login username=вася password=K2lq     # cтарый 
+http -f POST http://178.44.122.53:8000/login username=вася password=K2lq     # cтарый 
 
 
 
