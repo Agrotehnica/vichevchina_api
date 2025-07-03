@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     MYSQL_USER: str = "myuser"
     MYSQL_PASSWORD: str = "mypassword"
     MYSQL_DB: str = "feedmill_db"
+    MYSQL_PORT: int = 3307  # порт 
 
     class Config:
         case_sensitive = True

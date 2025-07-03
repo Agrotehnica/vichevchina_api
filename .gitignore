@@ -1,11 +1,8 @@
 aapi/
 __pycache__/
-mysql_data/
-mysql_data_test/
-docker/
-docker_mySQL/
-docker_mySQL+phpMyAdmin/
-generate_requirements.py
+.mysql_data/
+aapi/
+Postman/
 *.old
 *.in
 *.tmp

@@ -8,6 +8,7 @@ def get_connection():
         user=settings.MYSQL_USER,
         password=settings.MYSQL_PASSWORD,
         database=settings.MYSQL_DB,
+        port=settings.MYSQL_PORT,
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=True
