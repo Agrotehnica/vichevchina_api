@@ -4,7 +4,7 @@ from db_mysql import get_connection
 from logger import logger  # импортируем логгер
 import datetime
 
-# Получить ингредиент и все его бункеры
+# Получить ингредиент и все его ДОСТУПНЫЕ бункеры
 def get_ingredient_bins_from_db(ingredient_id):
     conn = get_connection()
     try:
@@ -22,10 +22,10 @@ def get_ingredient_bins_from_db(ingredient_id):
                             )    
                 return None
 
-            cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s", (ingredient_id,))
+            cursor.execute("SELECT * FROM bins WHERE ingredient_id=%s AND bin_status=0", (ingredient_id,))
             bins = cursor.fetchall()
             if not bins:
-                logger.info(f"Бункеров с ингредиентом {ingredient_id} не найдено")
+                logger.info(f"Доступных бункеров с ингредиентом {ingredient_id} не найдено")
                 raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={
@@ -33,7 +33,7 @@ def get_ingredient_bins_from_db(ingredient_id):
                     "message": "Ingredient bins not found"}           
                                     )
 
-            logger.info(f"Найдено {len(bins)} бункеров с ингредиентом {ingredient_id}")
+            logger.info(f"Найдено {len(bins)} доступных бункеров с ингредиентом {ingredient_id}")
             return {
                 "ingredient": ingredient,
                 "bins": bins
@@ -87,7 +87,7 @@ def parse_loaded_at(b):
     else:
         return b["last_loaded_at"]
 
-# ===POST /ingredient/===
+# ========================  POST /ingredient/  ==========================
 # бункер выбирается по самой старой дате last_loaded_at
 def handle_ingredient_request(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "amount"]
@@ -131,7 +131,7 @@ def handle_ingredient_request(data: Dict[str, Any]):
         "available": total_amount
     }
 
-# === POST /confirm_start_loading/ ===
+# ======================== POST /confirm_start_loading/ ============================
 def handle_confirm_start_loading(data: Dict[str, Any]):
     required_fields = ["ingredient_id", "feed_mixer_id", "bin_id", "amount"]
     if not all(field in data for field in required_fields):

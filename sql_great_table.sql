@@ -18,6 +18,7 @@ CREATE TABLE bins (
     amount INT DEFAULT NULL,
     rfid VARCHAR(255) DEFAULT NULL,
     last_loaded_at DATETIME DEFAULT NULL,
+    bin_status INT NOT NULL DEFAULT 0,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
