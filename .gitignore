@@ -1,8 +1,11 @@
 aapi/
 __pycache__/
 .mysql_data/
+mysql_data/
 aapi/
 Postman/
+docker-compose_only2.yaml
+docker-compose_full.yaml
 *.old
 *.in
 *.tmp
