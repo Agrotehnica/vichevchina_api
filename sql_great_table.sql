@@ -31,6 +31,8 @@ CREATE TABLE requests (
     requested_amount INT NOT NULL,
     delivered_amount INT DEFAULT NULL,
     loading_into_mixer_run INT NOT NULL DEFAULT 0,
+    otgruzka_start_at DATETIME DEFAULT NULL,
+    otgruzka_end_at DATETIME DEFAULT NULL,
     FOREIGN KEY (mixer_id) REFERENCES mixers(mixer_id),
     FOREIGN KEY (bin_id) REFERENCES bins(bin_id),
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
