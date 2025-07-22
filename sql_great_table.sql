@@ -17,7 +17,7 @@ CREATE TABLE bins (
     ingredient_id VARCHAR(255) DEFAULT NULL,
     amount INT DEFAULT NULL,
     rfid VARCHAR(255) DEFAULT NULL,
-    last_loaded_at DATETIME DEFAULT NULL,
+    last_loaded_at TIMESTAMP NULL DEFAULT NULL,
     bin_status INT NOT NULL DEFAULT 0,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -31,8 +31,8 @@ CREATE TABLE requests (
     requested_amount INT NOT NULL,
     delivered_amount INT DEFAULT NULL,
     loading_into_mixer_run INT NOT NULL DEFAULT 0,
-    otgruzka_start_at DATETIME DEFAULT NULL,
-    otgruzka_end_at DATETIME DEFAULT NULL,
+    otgruzka_start_at TIMESTAMP NULL DEFAULT NULL,
+    otgruzka_end_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (mixer_id) REFERENCES mixers(mixer_id),
     FOREIGN KEY (bin_id) REFERENCES bins(bin_id),
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(ingredient_id)
