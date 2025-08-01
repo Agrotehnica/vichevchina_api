@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200
 
     # --- Добавлено для MySQL ---
-    MYSQL_HOST: str = "localhost"
+    #MYSQL_HOST: str = "localhost"   #если запускать локально
+    MYSQL_HOST: str = "db"
     MYSQL_USER: str = "myuser"
     MYSQL_PASSWORD: str = "mypassword"
     MYSQL_DB: str = "feedmill_db"
