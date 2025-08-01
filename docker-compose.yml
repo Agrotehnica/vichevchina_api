@@ -10,7 +10,7 @@ services:
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
     ports:
-      - "3307:3306"
+      - "3306:3306"     #для компьютера в вичевщине  нужно 3307:3306 потому что  там уже стояла MySQL и порт 3306 хоста уже занят
     volumes:
       - .mysql_data:/var/lib/mysql
       - ./sql_great_table.sql:/docker-entrypoint-initdb.d/1.sql
