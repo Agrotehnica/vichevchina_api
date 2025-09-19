@@ -80,3 +80,6 @@ Server: mysql (или пусто)
             Username: root
             Password: agrotechika (задается  в docker-compose.yml)
 
+----------------------------------------------------------------------
+Просмотр логов через консоль:
+sudo docker logs -f fastapi-app
